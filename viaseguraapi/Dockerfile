@@ -3,8 +3,8 @@ FROM maven:3.8.8-amazoncorretto-21-al2023 as build
 WORKDIR /build
 
 # Copie apenas os arquivos de configuração Maven primeiro
-COPY ./Backend/viaseguraapi/pom.xml .
-COPY ./Backend/viaseguraapi/src ./src
+COPY ./pom.xml .
+COPY ./src ./src
 
 # Resolve dependências e compila
 RUN mvn clean package -DskipTests
