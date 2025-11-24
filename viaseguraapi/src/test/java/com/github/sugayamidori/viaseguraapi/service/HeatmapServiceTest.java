@@ -135,7 +135,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO2));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, null, null, 0, 10
+                null, null, null, null,
+                null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -161,7 +162,8 @@ class HeatmapServiceTest {
                 .thenReturn(emptyPage);
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, null, null, 0, 10
+                null, null, null, null,
+                null,null, 0, 10
         );
 
         assertNotNull(result);
@@ -189,7 +191,8 @@ class HeatmapServiceTest {
                 .thenReturn(Collections.emptyList());
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, null, null, 0, 10
+                null, null, null, null,
+                null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -220,7 +223,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                h3Cell, null, null, null, 0, 10
+                h3Cell, null, null, null,
+                null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -247,7 +251,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, year, null, null, 0, 10
+                null, year, null, null,
+                null,null, 0, 10
         );
 
         assertNotNull(result);
@@ -274,7 +279,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, month, null, 0, 10
+                null, null, month, null,
+                null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -301,7 +307,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, null, numCasualties, 0, 10
+                null, null, null, null,
+                null, numCasualties, 0, 10
         );
 
         assertNotNull(result);
@@ -331,7 +338,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                h3Cell, year, month, numCasualties, 0, 10
+                h3Cell, year, month, null,
+                null, numCasualties, 0, 10
         );
 
         assertNotNull(result);
@@ -365,7 +373,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, null, null, 1, 5
+                null, null, null, null,
+                null, null, 1, 5
         );
 
         assertNotNull(result);
@@ -406,7 +415,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1, h3CoordinatesDTO3));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, null, null, 0, 10
+                null, null, null, null,
+                null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -436,7 +446,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                null, null, null, null, 0, 10
+                null, null, null, null,
+                null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -468,7 +479,8 @@ class HeatmapServiceTest {
                 .thenReturn(List.of(h3CoordinatesDTO1));
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                "   ", null, null, null, 0, 10
+                "   ", null, null, null,
+                null, null, 0, 10
         );
 
         assertNotNull(result);
