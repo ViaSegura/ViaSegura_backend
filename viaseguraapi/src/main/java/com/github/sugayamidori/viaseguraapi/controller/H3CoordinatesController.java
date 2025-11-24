@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("h3_grid")
@@ -48,5 +49,13 @@ public class H3CoordinatesController implements H3CoordinatesControllerDocs {
 
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/neighborhoods")
+    @Override
+    public ResponseEntity<List<String>> getAllNeighborhoods() {
+        List<String> neighborhoods = service.findDistinctNeighborhoods();
+        return ResponseEntity.ok(neighborhoods);
+    }
+
 
 }

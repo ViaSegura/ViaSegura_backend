@@ -4,6 +4,7 @@ import com.github.sugayamidori.viaseguraapi.model.H3Coordinates;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 
 public class H3CoordinatesSpecs {
 
@@ -20,7 +21,15 @@ public class H3CoordinatesSpecs {
     }
 
     public static Specification<H3Coordinates> neighborhoodLike(String neighborhoodLike) {
-        return (root, query, cb) ->
-                cb.like( cb.upper(root.get("neighborhood")), "%" + neighborhoodLike.toUpperCase() + "%");
+        return (root, query, cb) -> cb.like(
+                cb.function("unaccent", String.class, cb.upper(root.get("neighborhood"))),
+                "%" + normalize(neighborhoodLike).toUpperCase() + "%"
+        );
+    }
+
+    private static String normalize(String input) {
+        if (input == null) return null;
+        return Normalizer.normalize(input, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
     }
 }

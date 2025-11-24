@@ -13,4 +13,7 @@ public interface H3CoordinatesRepository extends JpaRepository<H3Coordinates, UU
 
     @Query("SELECT h FROM H3Coordinates h WHERE h.h3Cell IN :h3Cells")
     List<H3Coordinates> findByH3CellIn(@Param("h3Cells") List<String> h3Cells);
+
+    @Query("SELECT DISTINCT h.neighborhood FROM H3Coordinates h")
+    List<String> findDistinctNeighborhoods();
 }

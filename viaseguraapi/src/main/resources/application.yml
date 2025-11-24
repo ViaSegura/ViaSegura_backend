@@ -44,7 +44,10 @@ logging:
 spring-doc:
   path-to-match:
     - /auth/**
-    - /usuarios/**
+    - /users/**
+    - /h3_grid/**
+    - /heatmap/**
+    - /predictions/**
   swagger-ui:
     user-root-path: true
 # production

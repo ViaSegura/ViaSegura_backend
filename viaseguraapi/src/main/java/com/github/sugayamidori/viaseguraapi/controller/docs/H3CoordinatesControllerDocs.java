@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface H3CoordinatesControllerDocs {
 
@@ -42,4 +43,21 @@ public interface H3CoordinatesControllerDocs {
                                                   Integer page,
                                                   @RequestParam(value = "pageSize", defaultValue = "20")
                                                   Integer pageSize);
+
+    @Operation(summary = "Search for all neighborhoods",
+            description = "Get all different neighborhoods",
+            tags = "H3 Coordinates",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    array = @ArraySchema(schema = @Schema(implementation = List.class))
+                            )),
+                    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Not Found", content = @Content),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),
+            })
+    ResponseEntity<List<String>> getAllNeighborhoods();
 }

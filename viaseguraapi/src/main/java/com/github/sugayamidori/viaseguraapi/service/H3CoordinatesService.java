@@ -10,8 +10,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
+import java.text.Normalizer;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.github.sugayamidori.viaseguraapi.repository.specs.H3CoordinatesSpecs.*;
@@ -19,6 +19,10 @@ import static com.github.sugayamidori.viaseguraapi.repository.specs.H3Coordinate
 @Service
 @RequiredArgsConstructor
 public class H3CoordinatesService {
+
+    private static final Set<String> LOWERCASE_WORDS = Set.of(
+            "de", "da", "do", "das", "dos"
+    );
 
     private final H3CoordinatesRepository repository;
 
@@ -60,4 +64,56 @@ public class H3CoordinatesService {
         return allCoordinates.stream()
                 .collect(Collectors.groupingBy(H3Coordinates::getH3Cell));
     }
+
+    public List<String> findDistinctNeighborhoods() {
+        List<String> distinctNeighborhoods = repository.findDistinctNeighborhoods();
+
+        List<String> sanitized = distinctNeighborhoods.stream()
+                .filter(value -> value != null && !value.contains("\\N"))
+                .toList();
+
+        Map<String, List<String>> grouped = sanitized.stream()
+                .collect(Collectors.groupingBy(this::normalize));
+
+        List<String> finalList = new ArrayList<>();
+
+        for (List<String> group : grouped.values()) {
+            String chosen = group.stream()
+                    .filter(this::hasAccents)
+                    .findFirst()
+                    .orElse(group.getFirst());
+
+            finalList.add(capitalizeWords(chosen));
+        }
+
+        finalList.sort(Comparator.naturalOrder());
+
+        return finalList;
+    }
+
+    private String capitalizeWords(String text) {
+        if (text == null || text.isBlank()) return text;
+
+        String[] words = text.toLowerCase().split("\\s+");
+
+        for (int i = 0; i < words.length; i++) {
+            String w = words[i];
+
+            if (i == 0 || !LOWERCASE_WORDS.contains(w)) {
+                words[i] = w.substring(0, 1).toUpperCase() + w.substring(1);
+            }
+        }
+
+        return String.join(" ", words);
+    }
+    private String normalize(String input) {
+        return Normalizer.normalize(input, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase();
+    }
+
+    private boolean hasAccents(String input) {
+        return !input.equals(normalize(input));
+    }
+
 }
