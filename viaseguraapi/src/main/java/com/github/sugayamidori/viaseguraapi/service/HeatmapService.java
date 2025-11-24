@@ -32,13 +32,15 @@ public class HeatmapService {
 
     public Page<HeatmapWithCoordinatesDTO> searchWithCoordinates(
             String h3Cell,
-            Integer year,
-            Integer month,
+            Integer startYear,
+            Integer startMonth,
+            Integer endYear,
+            Integer endMonth,
             BigDecimal numCasualties,
             Integer page,
             Integer pageSize
     ) {
-        Page<Heatmap> heatmaps = search(h3Cell, year, month, numCasualties, page, pageSize);
+        Page<Heatmap> heatmaps = search(h3Cell, startYear, startMonth, endYear, endMonth, numCasualties, page, pageSize);
 
         if (heatmaps.isEmpty()) {
             return Page.empty(heatmaps.getPageable());
@@ -68,8 +70,10 @@ public class HeatmapService {
 
     private Page<Heatmap> search(
             String h3Cell,
-            Integer year,
-            Integer month,
+            Integer startYear,
+            Integer startMonth,
+            Integer endYear,
+            Integer endMonth,
             BigDecimal numCasualties,
             Integer page,
             Integer pageSize
@@ -81,17 +85,30 @@ public class HeatmapService {
             specs = specs.and(h3CellEquals(h3Cell));
         }
 
-        if(year != null) {
-            specs = specs.and(yearEquals(year));
-        }
-
-        if(month != null) {
-            specs = specs.and(monthEquals(month));
-        }
-
         if(numCasualties != null) {
             specs = specs.and(numCasualtiesEquals(numCasualties));
         }
+
+        Specification<Heatmap> groupStart = Specification.allOf();
+        Specification<Heatmap> groupEnd = Specification.allOf();
+
+        if(startYear != null) {
+            groupStart = groupStart.and(startYearEquals(startYear));
+        }
+
+        if(startMonth != null) {
+            groupStart = groupStart.and(startMonthEquals(startMonth));
+        }
+
+        if(endYear != null) {
+            groupEnd = groupEnd.and(endYearEquals(endYear));
+        }
+
+        if(endMonth != null) {
+            groupEnd = groupEnd.and(endMonthEquals(endMonth));
+        }
+
+        specs = specs.and(groupStart.and(groupEnd));
 
         Pageable pageRequest = PageRequest.of(page, pageSize);
 

@@ -11,12 +11,20 @@ public class HeatmapSpecs {
         return (root, query, cb) -> cb.equal(root.get("h3Cell"), h3Cell);
     }
 
-    public static Specification<Heatmap> yearEquals(Integer year) {
-        return (root, query, cb) -> cb.equal(root.get("year"), year);
+    public static Specification<Heatmap> startYearEquals(Integer startYear) {
+        return (root, query, cb) -> cb.ge(root.get("year"), startYear);
     }
 
-    public static Specification<Heatmap> monthEquals(Integer month) {
-        return (root, query, cb) -> cb.equal(root.get("month"), month);
+    public static Specification<Heatmap> startMonthEquals(Integer startMonth) {
+        return (root, query, cb) -> cb.ge(root.get("month"), startMonth);
+    }
+
+    public static Specification<Heatmap> endYearEquals(Integer endYear) {
+        return (root, query, cb) -> cb.le(root.get("year"), endYear);
+    }
+
+    public static Specification<Heatmap> endMonthEquals(Integer endMonth) {
+        return (root, query, cb) -> cb.le(root.get("month"), endMonth);
     }
 
     public static Specification<Heatmap> numCasualtiesEquals(BigDecimal numCasualties) {

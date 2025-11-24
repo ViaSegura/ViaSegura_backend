@@ -31,18 +31,14 @@ public interface HeatmapControllerDocs {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),
             })
     ResponseEntity<Page<HeatmapWithCoordinatesDTO>> search(
-            @RequestParam(value = "h3Cell", required = false)
-            String h3Cell,
-            @RequestParam(value = "year", required = false)
-            Integer year,
-            @RequestParam(value = "month", required = false)
-            Integer month,
-            @RequestParam(value = "numCasualties", required = false)
-            BigDecimal numCasualties,
-            @RequestParam(value = "page", defaultValue = "0")
-            Integer page,
-            @RequestParam(value = "pageSize", defaultValue = "20")
-            Integer pageSize
+            @RequestParam(value = "h3Cell", required = false) String h3Cell,
+            @RequestParam(value = "start_year", required = false) Integer startYear,
+            @RequestParam(value = "start_month", required = false) Integer startMonth,
+            @RequestParam(value = "end_year", required = false) Integer endYear,
+            @RequestParam(value = "end_month", required = false) Integer endMonth,
+            @RequestParam(value = "num_casualties", required = false) BigDecimal numCasualties,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize
 
     );
 }
