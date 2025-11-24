@@ -23,7 +23,7 @@ class H3DataLoader:
             sys.exit(1)
 
     def load_coordinates(self, csv_path, batch_size=5000):
-        """Carrega coordenadas H3 (aceita duplicatas)"""
+        """Carrega coordenadas H3 (ignora duplicatas completas)"""
         print(f"\n{'='*60}")
         print(f"Carregando coordenadas de {csv_path}...")
         print(f"{'='*60}")
@@ -36,65 +36,50 @@ class H3DataLoader:
         df = df.dropna(subset=['h3_cell', 'latitude', 'longitude'])
 
         total = len(df)
-        print(f"Total de registros: {total:,}")
+        print(f"Total de registros no CSV: {total:,}")
 
-        buffer = StringIO()
-        df[['h3_cell', 'latitude', 'longitude', 'bairro_clean']].to_csv(
-            buffer,
-            index=False,
-            header=False,
-            na_rep='\\N'
-        )
-        buffer.seek(0)
-
-        start_time = time.time()
-
-        try:
-            self.cursor.copy_expert(
-                """
-                COPY h3_coordinates (h3_cell, latitude, longitude, bairro_clean)
-                FROM STDIN WITH CSV
-                """,
-                buffer
-            )
-            self.conn.commit()
-
-            elapsed = time.time() - start_time
-            print(f"✓ {total:,} registros inseridos em {elapsed:.2f}s ({total/elapsed:.0f} registros/s)")
-
-        except Exception as e:
-            self.conn.rollback()
-            print(f"✗ Erro no COPY: {e}")
-            print("Tentando método alternativo...")
-            self._load_coordinates_batch(df, batch_size)
-
-    def _load_coordinates_batch(self, df, batch_size):
-        """Fallback: INSERT em lotes"""
-        total = len(df)
         data = [
             (row['h3_cell'], row['latitude'], row['longitude'], row['bairro_clean'])
             for _, row in df.iterrows()
         ]
 
         start_time = time.time()
+        inserted = 0
 
         for i in range(0, total, batch_size):
             batch = data[i:i + batch_size]
+
+            # Usando execute_values com ON CONFLICT DO NOTHING
+            template = "(h3_cell, latitude, longitude, bairro_clean) VALUES %s ON CONFLICT (h3_cell, latitude, longitude, bairro_clean) DO NOTHING"
+
             execute_values(
                 self.cursor,
-                "INSERT INTO h3_coordinates (h3_cell, latitude, longitude, bairro_clean) VALUES %s",
+                f"""
+                WITH inserted AS (
+                    INSERT INTO h3_coordinates {template}
+                    RETURNING id
+                )
+                SELECT COUNT(*) FROM inserted
+                """,
                 batch,
-                page_size=batch_size
+                page_size=batch_size,
+                fetch=True
             )
+
+            result = self.cursor.fetchone()
+            batch_inserted = result[0] if result else 0
+            inserted += batch_inserted
             self.conn.commit()
+
             progress = (i + len(batch)) / total * 100
-            print(f"  Progresso: {progress:.1f}% ({i + len(batch):,}/{total:,})")
+            print(f"  Progresso: {progress:.1f}% ({i + len(batch):,}/{total:,}) - Inseridos: {inserted:,}")
 
         elapsed = time.time() - start_time
-        print(f"✓ Total: {total:,} registros em {elapsed:.2f}s")
+        skipped = total - inserted
+        print(f"✓ Inseridos: {inserted:,} | Ignorados (duplicatas): {skipped:,} | Tempo: {elapsed:.2f}s")
 
     def load_accidents(self, csv_path, batch_size=5000):
-        """Carrega acidentes históricos"""
+        """Carrega acidentes históricos (ignora duplicatas completas)"""
         print(f"\n{'='*60}")
         print(f"Carregando acidentes de {csv_path}...")
         print(f"{'='*60}")
@@ -108,7 +93,7 @@ class H3DataLoader:
         df['num_sinistros'] = df['num_sinistros'].fillna(0.0)
 
         total = len(df)
-        print(f"Total de registros: {total:,}")
+        print(f"Total de registros no CSV: {total:,}")
 
         data = [
             (row['h3_cell'], int(row['year']), int(row['month']), float(row['num_sinistros']))
@@ -116,29 +101,40 @@ class H3DataLoader:
         ]
 
         start_time = time.time()
+        inserted = 0
+        updated = 0
 
         for i in range(0, total, batch_size):
             batch = data[i:i + batch_size]
+
+            # Insere apenas se não existir o mesmo h3_cell+year+month+num_sinistros
+            # Atualiza se existir com num_sinistros diferente
             execute_values(
                 self.cursor,
                 """
                 INSERT INTO heatmap (h3_cell, year, month, num_sinistros)
                 VALUES %s
-                ON CONFLICT (h3_cell, year, month) DO UPDATE
-                SET num_sinistros = EXCLUDED.num_sinistros
+                ON CONFLICT (h3_cell, year, month) 
+                DO UPDATE SET num_sinistros = EXCLUDED.num_sinistros
+                WHERE heatmap.num_sinistros IS DISTINCT FROM EXCLUDED.num_sinistros
                 """,
                 batch,
                 page_size=batch_size
             )
+
+            rows_affected = self.cursor.rowcount
+            inserted += rows_affected
             self.conn.commit()
+
             progress = (i + len(batch)) / total * 100
-            print(f"  Progresso: {progress:.1f}% ({i + len(batch):,}/{total:,})")
+            print(f"  Progresso: {progress:.1f}% ({i + len(batch):,}/{total:,}) - Afetados: {inserted:,}")
 
         elapsed = time.time() - start_time
-        print(f"✓ Total: {total:,} registros em {elapsed:.2f}s")
+        skipped = total - inserted
+        print(f"✓ Inseridos/Atualizados: {inserted:,} | Ignorados: {skipped:,} | Tempo: {elapsed:.2f}s")
 
     def load_predictions(self, csv_path, batch_size=5000):
-        """Carrega predições"""
+        """Carrega predições (ignora duplicatas completas)"""
         print(f"\n{'='*60}")
         print(f"Carregando predições de {csv_path}...")
         print(f"{'='*60}")
@@ -152,7 +148,7 @@ class H3DataLoader:
         df['week_start'] = pd.to_datetime(df['week_start'])
 
         total = len(df)
-        print(f"Total de registros: {total:,}")
+        print(f"Total de registros no CSV: {total:,}")
 
         data = [
             (row['h3_cell'], row['week_start'].date(), float(row['predicted_accidents']))
@@ -160,26 +156,35 @@ class H3DataLoader:
         ]
 
         start_time = time.time()
+        inserted = 0
 
         for i in range(0, total, batch_size):
             batch = data[i:i + batch_size]
+
+            # Atualiza apenas se o valor de predicted_accidents for diferente
             execute_values(
                 self.cursor,
                 """
                 INSERT INTO predictions (h3_cell, week_start, predicted_accidents)
                 VALUES %s
-                ON CONFLICT (h3_cell, week_start) DO UPDATE
-                SET predicted_accidents = EXCLUDED.predicted_accidents
+                ON CONFLICT (h3_cell, week_start) 
+                DO UPDATE SET predicted_accidents = EXCLUDED.predicted_accidents
+                WHERE predictions.predicted_accidents IS DISTINCT FROM EXCLUDED.predicted_accidents
                 """,
                 batch,
                 page_size=batch_size
             )
+
+            rows_affected = self.cursor.rowcount
+            inserted += rows_affected
             self.conn.commit()
+
             progress = (i + len(batch)) / total * 100
-            print(f"  Progresso: {progress:.1f}% ({i + len(batch):,}/{total:,})")
+            print(f"  Progresso: {progress:.1f}% ({i + len(batch):,}/{total:,}) - Afetados: {inserted:,}")
 
         elapsed = time.time() - start_time
-        print(f"✓ Total: {total:,} registros em {elapsed:.2f}s")
+        skipped = total - inserted
+        print(f"✓ Inseridos/Atualizados: {inserted:,} | Ignorados: {skipped:,} | Tempo: {elapsed:.2f}s")
 
     def get_stats(self):
         """Mostra estatísticas das tabelas"""
@@ -210,7 +215,7 @@ class H3DataLoader:
 if __name__ == "__main__":
     # Configuração do banco (lê variáveis de ambiente ou usa padrão)
     db_config = {
-        'host': os.getenv('DB_HOST', 'viaseguradb'),  # 'postgres' é o nome do serviço no docker-compose
+        'host': os.getenv('DB_HOST', 'viaseguradb'),
         'database': os.getenv('DB_NAME', 'viasegura'),
         'user': os.getenv('DB_USER', 'postgres'),
         'password': os.getenv('DB_PASSWORD', 'postgres'),

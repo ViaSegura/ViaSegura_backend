@@ -12,3 +12,7 @@ CREATE TABLE h3_coordinates (
 
 CREATE INDEX idx_h3_cell ON h3_coordinates(h3_cell);
 CREATE INDEX idx_bairro ON h3_coordinates(bairro_clean);
+
+ALTER TABLE h3_coordinates
+ADD CONSTRAINT unique_coordinate
+UNIQUE (h3_cell, latitude, longitude, bairro_clean);
