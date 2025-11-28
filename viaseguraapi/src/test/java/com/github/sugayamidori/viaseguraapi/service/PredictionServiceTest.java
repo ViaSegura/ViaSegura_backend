@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -45,14 +46,14 @@ class PredictionServiceTest {
         prediction1 = new Prediction();
         prediction1.setId(UUID.randomUUID());
         prediction1.setH3Cell("898180208d3ffff");
-        prediction1.setWeekStart(new Date());
+        prediction1.setWeekStart(LocalDate.now());
         prediction1.setPredictedAccidents(BigDecimal.valueOf(0.0009153104641940453));
         prediction1.setCreatedAt(LocalDateTime.now());
 
         prediction2 = new Prediction();
         prediction2.setId(UUID.randomUUID());
         prediction2.setH3Cell("89818065923ffff");
-        prediction2.setWeekStart(new Date());
+        prediction2.setWeekStart(LocalDate.now());
         prediction2.setPredictedAccidents(BigDecimal.valueOf(1.2305097036787915));
         prediction2.setCreatedAt(LocalDateTime.now());
     }
@@ -92,7 +93,7 @@ class PredictionServiceTest {
 
     @Test
     void search_shouldFilterByWeekStart_whenWeekStartProvided() {
-        Date weekStart = new Date();
+        LocalDate weekStart = LocalDate.now();
         Page<Prediction> expectedPage = new PageImpl<>(List.of(prediction1, prediction2));
 
         when(repository.findAll(ArgumentMatchers.<Specification<Prediction>>any(), any(Pageable.class)))
@@ -128,7 +129,7 @@ class PredictionServiceTest {
     @Test
     void search_shouldApplyMultipleFilters_whenAllParametersProvided() {
         String h3Cell = "898180208d3ffff";
-        Date weekStart = new Date();
+        LocalDate weekStart = LocalDate.now();
         BigDecimal predicted = BigDecimal.valueOf(0.0009153104641940453);
         Page<Prediction> expectedPage = new PageImpl<>(List.of(prediction1));
         when(repository.findAll(ArgumentMatchers.<Specification<Prediction>>any(), any(Pageable.class)))

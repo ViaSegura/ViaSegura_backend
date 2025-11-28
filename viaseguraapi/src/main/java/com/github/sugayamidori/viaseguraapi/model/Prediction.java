@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class Prediction implements Serializable {
     private String h3Cell;
 
     @Column(name = "week_start")
-    private Date weekStart;
+    private LocalDate weekStart;
 
     @Column(name = "predicted_accidents", precision = 15, scale = 10)
     private BigDecimal predictedAccidents;
