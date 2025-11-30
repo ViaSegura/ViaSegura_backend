@@ -1,5 +1,6 @@
 package com.github.sugayamidori.viaseguraapi.controller.docs;
 
+import com.github.sugayamidori.viaseguraapi.controller.dto.ErrorResponse;
 import com.github.sugayamidori.viaseguraapi.controller.dto.H3CoordinatesDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -25,11 +26,26 @@ public interface H3CoordinatesControllerDocs {
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     array = @ArraySchema(schema = @Schema(implementation = H3CoordinatesDTO.class))
                             )),
-                    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Not Found", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),
+                    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
             })
     ResponseEntity<Page<H3CoordinatesDTO>> search(@RequestParam(value = "h3Cell", required = false)
                                                   String h3Cell,
@@ -53,11 +69,26 @@ public interface H3CoordinatesControllerDocs {
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     array = @ArraySchema(schema = @Schema(implementation = List.class))
                             )),
-                    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Not Found", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),
+                    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
             })
     ResponseEntity<List<String>> getAllNeighborhoods();
 }

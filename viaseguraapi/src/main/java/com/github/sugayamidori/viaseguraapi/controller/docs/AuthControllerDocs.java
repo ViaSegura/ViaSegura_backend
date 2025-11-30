@@ -1,5 +1,6 @@
 package com.github.sugayamidori.viaseguraapi.controller.docs;
 
+import com.github.sugayamidori.viaseguraapi.controller.dto.ErrorResponse;
 import com.github.sugayamidori.viaseguraapi.controller.dto.LoginRequest;
 import com.github.sugayamidori.viaseguraapi.controller.dto.TokenDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,10 +20,22 @@ public interface AuthControllerDocs {
                             content = @Content(
                                     schema = @Schema(implementation = TokenDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
-                    @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+                    @ApiResponse(responseCode = "400", description = "Bad request", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            ))
             })
     ResponseEntity<?> login(@RequestBody LoginRequest loginRequest);
 
@@ -34,10 +47,22 @@ public interface AuthControllerDocs {
                             content = @Content(
                                     schema = @Schema(implementation = TokenDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
-                    @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+                    @ApiResponse(responseCode = "400", description = "Bad request", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )),
+                    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            ))
             })
     ResponseEntity<?> refresh(@PathVariable("username") String username,
                               @RequestHeader("Authorization") String refreshToken);
