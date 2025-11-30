@@ -1,7 +1,9 @@
 package com.github.sugayamidori.viaseguraapi.controller;
 
 import com.github.sugayamidori.viaseguraapi.controller.docs.HeatmapControllerDocs;
+import com.github.sugayamidori.viaseguraapi.controller.dto.FileBase64DTO;
 import com.github.sugayamidori.viaseguraapi.controller.dto.HeatmapWithCoordinatesDTO;
+import com.github.sugayamidori.viaseguraapi.service.ExcelExportService;
 import com.github.sugayamidori.viaseguraapi.service.HeatmapService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("heatmap")
@@ -21,6 +27,7 @@ import java.math.BigDecimal;
 public class HeatmapController implements HeatmapControllerDocs {
 
     private final HeatmapService service;
+    private final ExcelExportService excelExportService;
 
     @GetMapping
     @Override
@@ -31,14 +38,40 @@ public class HeatmapController implements HeatmapControllerDocs {
             @RequestParam(value = "end_year", required = false) Integer endYear,
             @RequestParam(value = "end_month", required = false) Integer endMonth,
             @RequestParam(value = "num_casualties", required = false) BigDecimal numCasualties,
+            @RequestParam(value = "neighborhood", required = false) String neighborhood,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize
     ) {
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
-                h3Cell, startYear, startMonth, endYear, endMonth, numCasualties, page, pageSize
+                h3Cell, startYear, startMonth, endYear, endMonth, numCasualties, neighborhood, page, pageSize
         );
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/export")
+    @Override
+    public ResponseEntity<FileBase64DTO> exportData(
+            @RequestParam(value = "start_year", required = false) Integer startYear,
+            @RequestParam(value = "start_month", required = false) Integer startMonth,
+            @RequestParam(value = "end_year", required = false) Integer endYear,
+            @RequestParam(value = "end_month", required = false) Integer endMonth,
+            @RequestParam(value = "num_casualties", required = false) BigDecimal numCasualties,
+            @RequestParam(value = "neighborhood", required = false) String neighborhood
+    ) {
+        try {
+            String base64Excel = service.exportDataAsBase64(
+                    startYear, startMonth, endYear, endMonth, numCasualties, neighborhood
+            );
+
+            FileBase64DTO response = new FileBase64DTO(base64Excel,
+                    "heatmap_export_"+ LocalDateTime.now() +".xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
 }
