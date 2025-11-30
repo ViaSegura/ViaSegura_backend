@@ -136,7 +136,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, null, null,
-                null, null, 0, 10
+                null, null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -163,7 +163,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, null, null,
-                null,null, 0, 10
+                null,null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -192,7 +192,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, null, null,
-                null, null, 0, 10
+                null, null, null,0, 10
         );
 
         assertNotNull(result);
@@ -224,7 +224,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 h3Cell, null, null, null,
-                null, null, 0, 10
+                null, null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -252,7 +252,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, year, null, null,
-                null,null, 0, 10
+                null,null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -280,7 +280,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, month, null,
-                null, null, 0, 10
+                null, null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -308,7 +308,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, null, null,
-                null, numCasualties, 0, 10
+                null, numCasualties, null, 0, 10
         );
 
         assertNotNull(result);
@@ -339,7 +339,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 h3Cell, year, month, null,
-                null, numCasualties, 0, 10
+                null, numCasualties, null, 0, 10
         );
 
         assertNotNull(result);
@@ -374,7 +374,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, null, null,
-                null, null, 1, 5
+                null, null, null, 1, 5
         );
 
         assertNotNull(result);
@@ -416,7 +416,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, null, null,
-                null, null, 0, 10
+                null, null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -447,7 +447,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 null, null, null, null,
-                null, null, 0, 10
+                null, null, null, 0, 10
         );
 
         assertNotNull(result);
@@ -480,7 +480,7 @@ class HeatmapServiceTest {
 
         Page<HeatmapWithCoordinatesDTO> result = service.searchWithCoordinates(
                 "   ", null, null, null,
-                null, null, 0, 10
+                null, null, null, 0, 10
         );
 
         assertNotNull(result);
