@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 public interface HeatmapControllerDocs {
 
@@ -55,7 +54,7 @@ public interface HeatmapControllerDocs {
             @RequestParam(value = "num_casualties", required = false) BigDecimal numCasualties,
             @RequestParam(value = "neighborhood", required = false) String neighborhood,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize
+            @RequestParam(value = "pageSize", defaultValue = "150") Integer pageSize
 
     );
 
