@@ -256,7 +256,7 @@ jobs:
             echo "⏳ Aguardando container ficar saudável..."
             timeout=60
             counter=0
-            until [ "$(docker inspect --format='{{.State.Health.Status}}' viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }})" == "healthy" ] || [ $counter -eq $timeout ]; do
+            until [ "$(docker inspect --format='{{.State.Health.Status}}' viasegura-backend)" == "healthy" ] || [ $counter -eq $timeout ]; do
               echo "Aguardando... ($counter/$timeout)"
               sleep 2
               counter=$((counter + 2))
