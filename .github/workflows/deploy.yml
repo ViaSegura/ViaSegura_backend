@@ -226,10 +226,6 @@ jobs:
           echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
           
-          echo "📦 Deploying scripts to $ENVIRONMENT environment..."
-          
-          scp -o StrictHostKeyChecking=no -i private_key.pem -r scripts/* $EC2_USER@$EC2_HOST:/home/ubuntu/viasegura/scripts/
-          
           echo "🚀 Deploying to $ENVIRONMENT environment..."
           
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'ENDSSH'
