@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main      # Production
-      - stage     # Staging
+      - staging     # Staging
   pull_request:
     branches:
       - main
@@ -12,7 +12,7 @@ on:
 env:
   JAVA_VERSION: '21'
   MAVEN_OPTS: '-Xmx3072m'
-  ECR_REPOSITORY: viaseguraapi
+  ECR_REPOSITORY: viasegura-backend
 
 jobs:
   build-and-test:
@@ -65,7 +65,7 @@ jobs:
   build-docker-image:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
 
     outputs:
       image-tag: ${{ steps.env.outputs.IMAGE_TAG }}
@@ -89,7 +89,7 @@ jobs:
             echo "IMAGE_TAG=latest" >> $GITHUB_OUTPUT
           else
             echo "ENVIRONMENT=staging" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=stage" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=staging" >> $GITHUB_OUTPUT
           fi
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "GIT_SHA=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
@@ -171,7 +171,7 @@ jobs:
   deploy-to-ec2:
     needs: [build-and-test, build-docker-image]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
 
     environment:
       name: ${{ needs.build-docker-image.outputs.environment }}
@@ -195,7 +195,7 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
           else
             echo "ENVIRONMENT=staging" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=stage" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=staging" >> $GITHUB_OUTPUT
             echo "EC2_HOST=${{ secrets.EC2_STAGING_HOST }}" >> $GITHUB_OUTPUT
             echo "EC2_USER=${{ secrets.EC2_STAGING_USER }}" >> $GITHUB_OUTPUT
             echo "APP_URL=https://api-staging.viasegura.com" >> $GITHUB_OUTPUT
@@ -239,24 +239,24 @@ jobs:
             cd /home/ubuntu/viasegura || cd ~/viasegura || { echo "❌ Diretório não encontrado"; exit 1; }
           
             echo "🎯 Definindo imagem: ${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.env.outputs.IMAGE_TAG }}"
-            export BACKEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/viaseguraapi:${{ steps.env.outputs.IMAGE_TAG }}
+            export BACKEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.env.outputs.IMAGE_TAG }}
           
             echo "⬇️ Pulling nova imagem..."
             docker pull $BACKEND_IMAGE
           
             echo "💾 Backup do container atual (se existir)..."
-            if [ "$(docker ps -q -f name=viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }})" ]; then
-              docker commit viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }} \
-                viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}-backup:$(date +%Y%m%d-%H%M%S) || true
+            if [ "$(docker ps -q -f name=viasegura-backend)" ]; then
+              docker commit viasegura-backend \
+                viasegura-backend-backup:$(date +%Y%m%d-%H%M%S) || true
             fi
           
             echo "🔄 Atualizando container app-backend..."
-            docker-compose --env-file .env.${{ steps.env.outputs.ENVIRONMENT }} up -d app-backend
+            docker-compose up -d viaseguradb pgadmin4 app-backend data-loader
           
             echo "⏳ Aguardando container ficar saudável..."
-            timeout=60
+            timeout=120
             counter=0
-            until [ "$(docker inspect --format='{{.State.Health.Status}}' viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }})" == "healthy" ] || [ $counter -eq $timeout ]; do
+            until [ "$(docker inspect --format='{{.State.Health.Status}}' viasegura-backend)" == "healthy" ] || [ $counter -eq $timeout ]; do
               echo "Aguardando... ($counter/$timeout)"
               sleep 2
               counter=$((counter + 2))
@@ -264,7 +264,7 @@ jobs:
           
             if [ $counter -eq $timeout ]; then
               echo "⚠️ Timeout ao aguardar container ficar saudável"
-              docker logs --tail 50 viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}
+              docker logs --tail 50 viasegura-backend
               exit 1
             fi
           
@@ -272,7 +272,7 @@ jobs:
             docker image prune -af --filter "until=24h"
           
             echo "🧹 Removendo backups antigos (mantendo últimos 3)..."
-            docker images | grep "viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}-backup" | \
+            docker images | grep "viasegura-backend-backup" | \
               tail -n +4 | awk '{print $3}' | xargs -r docker rmi || true
           
             echo "✅ Deploy concluído com sucesso!"
@@ -280,7 +280,7 @@ jobs:
             docker-compose ps
           
             echo "📝 Logs recentes:"
-            docker logs --tail 20 viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}
+            docker logs --tail 20 viasegura-backend
           ENDSSH
           
           rm -f private_key.pem
