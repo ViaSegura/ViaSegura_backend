@@ -1,7 +1,7 @@
 services:
-  viaseguraapi:
+  app-backend:
     image: petervl80/viaseguraapi
-    container_name: viaseguraapi
+    container_name: app-backend
     ports:
       - "8080:8080"
       - "9090:9090"

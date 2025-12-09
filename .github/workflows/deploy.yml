@@ -12,7 +12,7 @@ on:
 env:
   JAVA_VERSION: '21'
   MAVEN_OPTS: '-Xmx3072m'
-  ECR_REPOSITORY: viaseguraapi
+  ECR_REPOSITORY: viasegura-backend
 
 jobs:
   build-and-test:
@@ -239,7 +239,7 @@ jobs:
             cd /home/ubuntu/viasegura || cd ~/viasegura || { echo "❌ Diretório não encontrado"; exit 1; }
           
             echo "🎯 Definindo imagem: ${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.env.outputs.IMAGE_TAG }}"
-            export BACKEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/viaseguraapi:${{ steps.env.outputs.IMAGE_TAG }}
+            export BACKEND_IMAGE=${{ secrets.AWS_ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.env.outputs.IMAGE_TAG }}
           
             echo "⬇️ Pulling nova imagem..."
             docker pull $BACKEND_IMAGE
@@ -251,7 +251,7 @@ jobs:
             fi
           
             echo "🔄 Atualizando container app-backend..."
-            docker-compose --env-file .env.${{ steps.env.outputs.ENVIRONMENT }} up -d app-backend
+            docker-compose up -d viaseguradb pgadmin4 app-backend data-loader
           
             echo "⏳ Aguardando container ficar saudável..."
             timeout=60
