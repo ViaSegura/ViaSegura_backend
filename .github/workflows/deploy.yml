@@ -254,7 +254,7 @@ jobs:
             docker-compose up -d viaseguradb pgadmin4 app-backend data-loader
           
             echo "⏳ Aguardando container ficar saudável..."
-            timeout=60
+            timeout=120
             counter=0
             until [ "$(docker inspect --format='{{.State.Health.Status}}' viasegura-backend)" == "healthy" ] || [ $counter -eq $timeout ]; do
               echo "Aguardando... ($counter/$timeout)"
