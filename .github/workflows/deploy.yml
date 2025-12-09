@@ -245,9 +245,9 @@ jobs:
             docker pull $BACKEND_IMAGE
           
             echo "💾 Backup do container atual (se existir)..."
-            if [ "$(docker ps -q -f name=viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }})" ]; then
-              docker commit viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }} \
-                viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}-backup:$(date +%Y%m%d-%H%M%S) || true
+            if [ "$(docker ps -q -f name=viasegura-backend)" ]; then
+              docker commit viasegura-backend \
+                viasegura-backend-backup:$(date +%Y%m%d-%H%M%S) || true
             fi
           
             echo "🔄 Atualizando container app-backend..."
@@ -264,7 +264,7 @@ jobs:
           
             if [ $counter -eq $timeout ]; then
               echo "⚠️ Timeout ao aguardar container ficar saudável"
-              docker logs --tail 50 viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}
+              docker logs --tail 50 viasegura-backend
               exit 1
             fi
           
@@ -272,7 +272,7 @@ jobs:
             docker image prune -af --filter "until=24h"
           
             echo "🧹 Removendo backups antigos (mantendo últimos 3)..."
-            docker images | grep "viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}-backup" | \
+            docker images | grep "viasegura-backend-backup" | \
               tail -n +4 | awk '{print $3}' | xargs -r docker rmi || true
           
             echo "✅ Deploy concluído com sucesso!"
@@ -280,7 +280,7 @@ jobs:
             docker-compose ps
           
             echo "📝 Logs recentes:"
-            docker logs --tail 20 viasegura-backend-${{ steps.env.outputs.ENVIRONMENT }}
+            docker logs --tail 20 viasegura-backend
           ENDSSH
           
           rm -f private_key.pem
