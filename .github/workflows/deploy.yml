@@ -65,7 +65,7 @@ jobs:
   build-docker-image:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
 
     outputs:
       image-tag: ${{ steps.env.outputs.IMAGE_TAG }}
@@ -89,7 +89,7 @@ jobs:
             echo "IMAGE_TAG=latest" >> $GITHUB_OUTPUT
           else
             echo "ENVIRONMENT=staging" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=stage" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=staging" >> $GITHUB_OUTPUT
           fi
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "GIT_SHA=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
@@ -171,7 +171,7 @@ jobs:
   deploy-to-ec2:
     needs: [build-and-test, build-docker-image]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
 
     environment:
       name: ${{ needs.build-docker-image.outputs.environment }}
@@ -195,7 +195,7 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
           else
             echo "ENVIRONMENT=staging" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=stage" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=staging" >> $GITHUB_OUTPUT
             echo "EC2_HOST=${{ secrets.EC2_STAGING_HOST }}" >> $GITHUB_OUTPUT
             echo "EC2_USER=${{ secrets.EC2_STAGING_USER }}" >> $GITHUB_OUTPUT
             echo "APP_URL=https://api-staging.viasegura.com" >> $GITHUB_OUTPUT
