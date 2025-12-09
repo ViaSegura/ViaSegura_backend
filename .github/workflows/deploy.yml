@@ -251,7 +251,7 @@ jobs:
             fi
           
             echo "🔄 Atualizando container app-backend..."
-            docker-compose up -d viaseguradb pgadmin4 app-backend data-loader
+            docker-compose up -d viaseguradb app-backend data-loader
           
             echo "⏳ Aguardando container ficar saudável..."
             timeout=120
