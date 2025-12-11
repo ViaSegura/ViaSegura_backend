@@ -244,12 +244,6 @@ jobs:
             echo "⬇️ Pulling nova imagem..."
             docker pull $BACKEND_IMAGE
           
-            echo "💾 Backup do container atual (se existir)..."
-            if [ "$(docker ps -q -f name=viasegura-backend)" ]; then
-              docker commit viasegura-backend \
-                viasegura-backend-backup:$(date +%Y%m%d-%H%M%S) || true
-            fi
-          
             echo "🔄 Atualizando container app-backend..."
             docker-compose up -d viaseguradb app-backend data-loader
           
@@ -269,7 +263,7 @@ jobs:
             fi
           
             echo "🧹 Limpando imagens antigas..."
-            docker image prune -af --filter "until=24h"
+            docker image prune -af --filter "until=1h"
           
             echo "🧹 Removendo backups antigos (mantendo últimos 3)..."
             docker images | grep "viasegura-backend-backup" | \
