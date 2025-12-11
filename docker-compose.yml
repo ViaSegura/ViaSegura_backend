@@ -19,13 +19,14 @@ services:
         condition: service_healthy
     networks:
       - viasegura-network
+      - monitoring
 
   viaseguradb:
     image: postgres:16.3
     container_name: viaseguradb
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgress
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=viasegura
       - TZ=America/Recife
     ports:
@@ -74,3 +75,5 @@ volumes:
 networks:
   viasegura-network:
     driver: bridge
+  monitoring:
+    external: true

@@ -236,7 +236,7 @@ ECR → Repositories → Create repository
 
 ```bash
 # SSH no servidor
-ssh ubuntu@SEU_IP_EC2
+ssh -i sua-chave.pem ubuntu@SEU_IP_EC2
 
 # Atualizar sistema
 sudo apt update && sudo apt upgrade -y
@@ -250,8 +250,19 @@ sudo usermod -aG docker ubuntu
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-# Instalar AWS CLI
-sudo apt install awscli -y
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# Install unzip
+sudo apt install unzip -y
+
+# Unzip o installer
+unzip awscliv2.zip
+
+# Rode o installer
+sudo ./aws/install
+
+# Verifique a instalação e configure AWS CLI
+aws --version
 aws configure
 # AWS Access Key ID: (use as mesmas do GitHub)
 # AWS Secret Access Key: (use as mesmas do GitHub)
@@ -260,7 +271,9 @@ aws configure
 
 # Relogar para aplicar permissões do Docker
 exit
-ssh ubuntu@SEU_IP_EC2
+ssh -i sua-chave.pem ubuntu@SEU_IP_EC2
+
+docker network create monitoring
 ```
 
 ### 2. Criar Estrutura de Diretórios
@@ -269,6 +282,14 @@ ssh ubuntu@SEU_IP_EC2
 # Criar diretório da aplicação
 mkdir -p /home/ubuntu/viasegura
 cd /home/ubuntu/viasegura
+
+# Remove scripts antigos
+sudo rm -rf scripts/
+mkdir -p scripts/data
+
+# Garante permissões corretas
+sudo chown -R $USER:$USER scripts/
+chmod -R 755 scripts/
 ```
 
 ### 3. Criar docker-compose.yml
@@ -279,33 +300,54 @@ nano docker-compose.yml
 
 Cole o conteúdo:
 ```yaml
-version: '3.8'
-
 services:
-  app-backend:
-    image: ${BACKEND_IMAGE}
-    container_name: viasegura-backend-${ENVIRONMENT:-production}
-    restart: unless-stopped
-    ports:
-      - "${BACKEND_PORT:-8080}:8080"
+  # Database
+  viaseguradb:
+    image: postgres:16.3
+    container_name: viaseguradb
     environment:
-      # Spring Profile
-      SPRING_PROFILES_ACTIVE: ${ENVIRONMENT:-production}
-      
-      # Database
-      SPRING_DATASOURCE_URL: ${DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
-      
-      # JWT
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
-      
-      # Server
-      SERVER_PORT: 8080
-      
+      POSTGRES_USER: ${DATASOURCE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD:-postgres}
+      POSTGRES_DB: viasegura
+      TZ: America/Recife
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/data:/data
     networks:
       - viasegura-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d viasegura || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend
+  app-backend:
+    image: ${BACKEND_IMAGE}
+    container_name: viasegura-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - SPRING_DATASOURCE_URL=${DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DATASOURCE_PASSWORD}
+      - ORIGIN_PATTERNS=${ORIGIN_PATTERNS}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      - SERVER_PORT=8080
+      - SERVER_ADDRESS=0.0.0.0
+      - TZ=America/Recife
+    env_file:
+      - .env
+    networks:
+      - viasegura-network
+      - monitoring
+    depends_on:
+      viaseguradb:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -318,64 +360,155 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Frontend
+  app-frontend:
+    image: ${FRONTEND_IMAGE}
+    container_name: viasegura-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-"http://localhost:8080"}
+      - NEXT_PUBLIC_MAP_TILE_URL="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    env_file:
+      - .env
+    networks:
+      - viasegura-network
+
+  # Data Loader
+  data-loader:
+    image: python:3.11-slim
+    container_name: data-loader
+    working_dir: /app
+    volumes:
+      - ./scripts:/app
+    networks:
+      - viasegura-network
+    entrypoint: ["/bin/bash", "/app/entrypoint.sh"]
+    depends_on:
+      viaseguradb:
+        condition: service_healthy
+    restart: "no"  # Executar apenas uma vez
+
+volumes:
+  postgres_data:
+
 networks:
   viasegura-network:
     driver: bridge
+  monitoring:
+    external: true
 ```
 
 ### 4. Criar Arquivo .env para Staging
 
 ```bash
 # No servidor STAGING
-nano .env.staging
+nano .env
 ```
 
 Cole e ajuste:
 ```env
-ENVIRONMENT=staging
-BACKEND_PORT=8081
-BACKEND_IMAGE=123456789012.dkr.ecr.us-east-1.amazonaws.com/viaseguraapi:stage
+# ===========================================
+# VIASEGURA API - Environment Variables
+# ===========================================
 
-# Database Staging
-DATASOURCE_URL=jdbc:postgresql://db-staging.viasegura.com:5432/viasegura_staging
-DATASOURCE_USERNAME=viasegura_user_stage
-DATASOURCE_PASSWORD=SuaSenhaSeguraStaging123!
+# ===========================================
+# DATABASE CONFIGURATION
+# ===========================================
+DATASOURCE_URL=jdbc:postgresql://viaseguradb:5432/viasegura
+DATASOURCE_USERNAME=postgres
+DATASOURCE_PASSWORD=postgres
 
-# JWT Staging
-JWT_SECRET=staging-jwt-secret-key-change-this-in-production-12345678
-JWT_EXPIRATION=86400000
+# ===========================================
+# JWT CONFIGURATION
+# ===========================================
+# Generate a secure secret key (minimum 256 bits)
+# You can use: openssl rand -base64 32
+JWT_SECRET=your-staging-jwt-secret-key-very-long-and-secure-123456789
+JWT_EXPIRE=3600000
+
+# ===========================================
+# CORS CONFIGURATION
+# ===========================================
+ORIGIN_PATTERNS=your-allowed-origins-for-cors
+
+# ===========================================
+# SPRING PROFILE
+# ===========================================
+# Options: dev, staging, prod
+SPRING_PROFILES_ACTIVE=staging
+
+# ===========================================
+# FRONTEND CONFIGURATION
+# ===========================================
+NEXT_PUBLIC_API_URL=your-staging-api-url
+NODE_ENV=development
+
+# ===========================================
+# DOCKER IMAGES
+# ===========================================
+BACKEND_IMAGE=your-ecr-repo-url/viaseguraapi:staging
+FRONTEND_IMAGE=your-ecr-repo-url/viasegurafrontend:staging
 ```
 
 ### 5. Criar Arquivo .env para Production
 
 ```bash
 # No servidor PRODUCTION
-nano .env.production
+nano .env
 ```
 
 Cole e ajuste:
 ```env
-ENVIRONMENT=production
-BACKEND_PORT=8080
-BACKEND_IMAGE=123456789012.dkr.ecr.us-east-1.amazonaws.com/viaseguraapi:latest
+# ===========================================
+# VIASEGURA API - Environment Variables
+# ===========================================
 
-# Database Production
-DATASOURCE_URL=jdbc:postgresql://db-prod.viasegura.com:5432/viasegura_production
-DATASOURCE_USERNAME=viasegura_user_prod
-DATASOURCE_PASSWORD=SuaSenhaSeguraProdXYZ789!@#
+# ===========================================
+# DATABASE CONFIGURATION
+# ===========================================
+DATASOURCE_URL=jdbc:postgresql://viaseguradb:5432/viasegura
+DATASOURCE_USERNAME=postgres
+DATASOURCE_PASSWORD=postgres
 
-# JWT Production
-JWT_SECRET=production-jwt-super-secret-key-very-long-and-secure-987654321
-JWT_EXPIRATION=86400000
+# ===========================================
+# JWT CONFIGURATION
+# ===========================================
+# Generate a secure secret key (minimum 256 bits)
+# You can use: openssl rand -base64 32
+JWT_SECRET=your-staging-jwt-secret-key-very-long-and-secure-123456789
+JWT_EXPIRE=3600000
+
+# ===========================================
+# CORS CONFIGURATION
+# ===========================================
+ORIGIN_PATTERNS=your-allowed-origins-for-cors
+
+# ===========================================
+# SPRING PROFILE
+# ===========================================
+# Options: dev, staging, prod
+SPRING_PROFILES_ACTIVE=prod
+
+# ===========================================
+# FRONTEND CONFIGURATION
+# ===========================================
+NEXT_PUBLIC_API_URL=your-staging-api-url
+NODE_ENV=production
+
+# ===========================================
+# DOCKER IMAGES
+# ===========================================
+BACKEND_IMAGE=your-ecr-repo-url/viaseguraapi:production
+FRONTEND_IMAGE=your-ecr-repo-url/viasegurafrontend:production
 ```
 
 ### 6. Testar Configuração
 
 ```bash
 # Teste se o docker-compose está ok
-docker-compose --env-file .env.staging config
-# ou
-docker-compose --env-file .env.production config
+docker-compose --env-file .env config
 
 # Verificar se AWS CLI está configurado
 aws ecr describe-repositories --region us-east-1
@@ -414,8 +547,7 @@ viasegura-backend/
 ```
 /home/ubuntu/viasegura/
 ├── docker-compose.yml
-├── .env.staging          # Apenas no servidor staging
-├── .env.production       # Apenas no servidor production
+├── .env                  # Variáveis de ambiente
 └── logs/                 # Opcional: para logs persistentes
 ```
 

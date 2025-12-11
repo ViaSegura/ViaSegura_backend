@@ -55,5 +55,5 @@ fi
 echo -e "${GREEN}═══════════════════════════════════════${NC}\n"
 
 # Mantém container rodando
-echo -e "${BLUE}Container pronto. Mantendo ativo...${NC}"
-tail -f /dev/null
+#echo -e "${BLUE}Container pronto. Mantendo ativo...${NC}"
+#tail -f /dev/null

@@ -226,6 +226,10 @@ jobs:
           echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
           
+          echo "📦 Deploying scripts to $ENVIRONMENT environment..."
+          
+          scp -o StrictHostKeyChecking=no -i private_key.pem -r scripts/* $EC2_USER@$EC2_HOST:/home/ubuntu/viasegura/scripts/
+          
           echo "🚀 Deploying to $ENVIRONMENT environment..."
           
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'ENDSSH'
@@ -244,14 +248,8 @@ jobs:
             echo "⬇️ Pulling nova imagem..."
             docker pull $BACKEND_IMAGE
           
-            echo "💾 Backup do container atual (se existir)..."
-            if [ "$(docker ps -q -f name=viasegura-backend)" ]; then
-              docker commit viasegura-backend \
-                viasegura-backend-backup:$(date +%Y%m%d-%H%M%S) || true
-            fi
-          
             echo "🔄 Atualizando container app-backend..."
-            docker-compose up -d viaseguradb pgadmin4 app-backend data-loader
+            docker-compose up -d viaseguradb app-backend data-loader
           
             echo "⏳ Aguardando container ficar saudável..."
             timeout=120
@@ -269,7 +267,7 @@ jobs:
             fi
           
             echo "🧹 Limpando imagens antigas..."
-            docker image prune -af --filter "until=24h"
+            docker image prune -af --filter "until=1h"
           
             echo "🧹 Removendo backups antigos (mantendo últimos 3)..."
             docker images | grep "viasegura-backend-backup" | \
